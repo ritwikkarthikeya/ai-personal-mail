@@ -1,6 +1,9 @@
+import "./config/env.js";
 import app from "./app.js";
 import { env } from "./config/env.js";
+import { startSchedulers } from "./utils/scheduler.js";
 
-app.listen(env.port, () => {
-  console.log(`🚀 Server running on port ${env.port}`);
+app.listen(env.port || 5000, () => {
+  console.log(`🚀 Server running on port ${env.port || 5000}`);
+  startSchedulers(); // 👈 START BACKGROUND JOBS
 });

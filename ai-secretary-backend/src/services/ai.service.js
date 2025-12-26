@@ -3,41 +3,49 @@ import fetch from "node-fetch";
 const OLLAMA_URL = "http://localhost:11434/api/generate";
 const MODEL = "mistral";
 
+/**
+ * Tries strict JSON parse.
+ * If that fails, attempts to extract JSON from text.
+ * If that fails, returns null (NO THROW).
+ */
 function safeJsonParse(text) {
   try {
     return JSON.parse(text);
   } catch {
-    // Try to extract JSON object from text
     const firstBrace = text.indexOf("{");
     const lastBrace = text.lastIndexOf("}");
 
     if (firstBrace === -1 || lastBrace === -1) {
-      throw new Error("No JSON found in LLM response");
+      return null;
     }
 
-    const jsonString = text.slice(firstBrace, lastBrace + 1);
-    return JSON.parse(jsonString);
+    try {
+      const jsonString = text.slice(firstBrace, lastBrace + 1);
+      return JSON.parse(jsonString);
+    } catch {
+      return null;
+    }
   }
 }
 
 export const aiService = {
   async analyzeEmail(emailText) {
     const prompt = `
-You are an intelligent email assistant.
+You are a backend service.
+You MUST return valid JSON.
+Do NOT include any text before or after JSON.
+Do NOT use markdown.
+Do NOT explain.
 
-Return ONLY valid JSON in the following format:
+If you cannot extract tasks, return an empty array.
+
+Return EXACTLY this JSON shape:
+
 {
-  "summary": "short summary",
+  "summary": "string",
   "importance": "low | medium | high",
-  "tasks": [
-    { "title": "task description", "due_date": null }
-  ]
+  "tasks": []
 }
-
-Rules:
-- Be concise
-- If no tasks, return empty array
-- Do NOT include explanations
 
 Email:
 """
@@ -53,7 +61,7 @@ ${emailText}
         prompt,
         stream: false,
         options: {
-          temperature: 0.2,
+          temperature: 0,
         },
       }),
     });
@@ -63,6 +71,21 @@ ${emailText}
     }
 
     const data = await response.json();
-    return safeJsonParse(data.response);
+
+    // 🔐 Try strict + extracted JSON
+    const parsed = safeJsonParse(data.response);
+
+    if (parsed) {
+      return parsed;
+    }
+
+    // 🛟 FALLBACK (CRITICAL)
+    // Never let LLM failure break the pipeline
+    return {
+      summary: data.response.slice(0, 500), // safe truncate
+      importance: "medium",
+      tasks: [],
+      _fallback: true,
+    };
   },
 };
