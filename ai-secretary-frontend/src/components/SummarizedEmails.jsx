@@ -4,9 +4,11 @@ import { fetchSummarizedEmails } from "../api/emails";
 export default function SummarizedEmails() {
   const [emails, setEmails] = useState([]);
 
-  useEffect(() => {
-    fetchSummarizedEmails().then(setEmails);
-  }, []);
+useEffect(() => {
+  apiFetch("/emails")
+    .then((data) => setEmails(Array.isArray(data) ? data : []))
+    .catch(() => setEmails([]));
+}, []);
 
   return (
     <section>

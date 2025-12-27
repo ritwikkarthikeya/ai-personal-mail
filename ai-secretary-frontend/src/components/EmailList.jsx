@@ -3,11 +3,11 @@ import { fetchEmails } from "../api/emails";
 
 export default function EmailList() {
   const [emails, setEmails] = useState([]);
-
-  useEffect(() => {
-    fetchEmails().then(setEmails);
-  }, []);
-
+useEffect(() => {
+  apiFetch("/emails")
+    .then((data) => setEmails(Array.isArray(data) ? data : []))
+    .catch(() => setEmails([]));
+}, []);
   return (
     <section>
       <h3>All Emails</h3>
