@@ -37,11 +37,10 @@ export const googleCallback = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    const FRONTEND_URL = "http://localhost:5173"; // change if needed
+    const FRONTEND_URL = "https://ai-personal-mail.vercel.app"; // change if needed
     res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
 
   } catch (err) {
-    console.error("Google callback error:", err);
-    res.redirect("http://localhost:5173/login?error=auth_failed");
-  }
+  res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
+}
 };
