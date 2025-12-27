@@ -9,10 +9,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Build Backend
-        run: docker build ./backend
+      - name: Build Backend Docker image
+        run: |
+          docker build \
+            -t ai-secretary-backend \
+            ./ai-secretary-backend
 
-      - name: Build Frontend
-        run: docker build ./frontend
+      - name: Build Frontend Docker image
+        run: |
+          docker build \
+            -t ai-secretary-frontend \
+            ./ai-secretary-frontend
