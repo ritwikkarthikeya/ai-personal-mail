@@ -11,7 +11,7 @@ export default function EmailList() {
   return (
     <section>
       <h3>All Emails</h3>
-      {emails.map((e) => (
+      {Array.isArray(emails) && emails.map((e) => (
         <div key={e.id} className="card">
           <b>{e.subject}</b>
           <p>{e.summary}</p>

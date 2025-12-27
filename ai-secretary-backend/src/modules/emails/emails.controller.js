@@ -15,7 +15,7 @@ export const getEmails = async (req, res) => {
       [userId]
     );
 
-    res.json(result.rows);
+    res.json(result.rows || []);
   } catch (err) {
     console.error("getEmails error:", err);
     res.status(500).json({ error: "Failed to fetch emails" });
