@@ -1,6 +1,6 @@
 export default function Login() {
   const loginWithGoogle = () => {
-    window.location.href = "http://localhost:5003/api/auth/google";
+    window.location.href = "https://ai-personal-mail.vercel.app/api/auth/google";
   };
 
   return (

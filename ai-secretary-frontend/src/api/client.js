@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5003/api";
+const API_BASE = "https://ai-personal-mail.vercel.app/api";
 
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
