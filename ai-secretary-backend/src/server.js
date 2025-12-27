@@ -2,16 +2,11 @@ import "./config/env.js";
 import app from "./app.js";
 import { startSchedulers } from "./utils/scheduler.js";
 
-const PORT = Number(process.env.PORT);
+const PORT = Number(process.env.PORT || 8000);
 
-if (!PORT) {
-  console.error("❌ PORT is not defined");
-  process.exit(1);
-}
-
-/* Health check MUST exist */
+/* Health check MUST exist BEFORE listen */
 app.get("/health", (req, res) => {
-  res.json({
+  res.status(200).json({
     status: "ok",
     service: "ai-secretary-backend",
     timestamp: new Date().toISOString(),

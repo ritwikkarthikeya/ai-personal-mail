@@ -4,8 +4,6 @@ import { runEmailIngestionCron } from "../modules/emails/email.ingestion.cron.js
 import { processUnprocessedEmails } from "../modules/ai/email.processor.js";
 
 export const startSchedulers = () => {
-  console.log("🚀 Starting schedulers...");
-
   cron.schedule("*/5 * * * *", async () => {
     console.log("⏰ Cron tick");
 
