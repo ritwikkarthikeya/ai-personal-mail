@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL + "/api";
+const API_BASE = "https://magnificent-mercy-ritwikkarthikeya-a5e5a947.koyeb.app/api";
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
 
