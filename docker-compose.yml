@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: ai_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_secretary
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+
+
+  backend:
+    build:
+      context: .
+      dockerfile: ai-secretary-backend/Dockerfile
+    image: ai-personal-mail-backend
+    container_name: ai_backend
+    ports:
+      - "5003:5003"
+    env_file:
+      - ai-secretary-backend/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/ai_secretary
+      OLLAMA_URL: http://host.docker.internal:11434
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./ai-secretary-frontend
+    container_name: ai_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

@@ -6,27 +6,23 @@ export const ragSearch = async (userId, query) => {
   // 1️⃣ Generate query embedding
   const queryEmbedding = await embeddingService.embed(query);
 
-  // 🔒 SAFETY CHECK
   if (!queryEmbedding || queryEmbedding.length !== 768) {
-    console.warn("⚠️ Invalid query embedding, skipping vector search");
-    return fallbackLLMAnswer(query);
+    return strictFallback(query);
   }
 
-  // ✅ Convert to pgvector literal
   const queryVector = `[${queryEmbedding.join(",")}]`;
 
-  // 2️⃣ Check if embeddings exist for user
-  const countResult = await pool.query(
+  // 2️⃣ Ensure embeddings exist
+  const { rows: countRows } = await pool.query(
     `SELECT COUNT(*) FROM embeddings WHERE user_id = $1`,
     [userId]
   );
 
-  if (Number(countResult.rows[0].count) === 0) {
-    console.warn("⚠️ No email embeddings found, using fallback");
-    return fallbackLLMAnswer(query);
+  if (Number(countRows[0].count) === 0) {
+    return strictFallback(query);
   }
 
-  // 3️⃣ Vector search (CORRECT)
+  // 3️⃣ Vector search
   const { rows } = await pool.query(
     `
     SELECT e.summary, e.subject, e.from_email
@@ -41,7 +37,7 @@ export const ragSearch = async (userId, query) => {
   );
 
   if (rows.length === 0) {
-    return fallbackLLMAnswer(query);
+    return strictFallback(query);
   }
 
   // 4️⃣ Build context
@@ -56,7 +52,7 @@ Summary: ${r.summary || "No summary"}
     )
     .join("\n");
 
-  // 5️⃣ Ask LLM with RAG context
+  // 5️⃣ STRICT RAG PROMPT
   const response = await fetch("http://localhost:11434/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -65,17 +61,17 @@ Summary: ${r.summary || "No summary"}
       prompt: `
 You are an AI email assistant.
 
-Using ONLY the information explicitly provided below,
-answer the user's question.
-
-Do NOT invent emails.
-Do NOT merge emails.
-Do NOT guess missing data.
+RULES:
+- Use ONLY the emails below.
+- If the answer is NOT present, respond exactly:
+  "Not found in the retrieved emails."
+- Do NOT infer, guess, or generalize.
+- Do NOT mention emails outside this list.
 
 Emails:
 ${context}
 
-User question:
+Question:
 ${query}
 `,
       stream: false,
@@ -87,30 +83,6 @@ ${query}
   return data.response;
 };
 
-/**
- * 🔁 FALLBACK WHEN RAG CANNOT RUN
- */
-async function fallbackLLMAnswer(query) {
-  const response = await fetch("http://localhost:11434/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "mistral",
-      prompt: `
-You are an AI assistant.
-
-Answer the user's question based on general understanding.
-If the question refers to emails, explain that more emails
-need to be processed for deeper insights.
-
-User question:
-${query}
-`,
-      stream: false,
-      options: { temperature: 0 },
-    }),
-  });
-
-  const data = await response.json();
-  return data.response;
+async function strictFallback(query) {
+  return `Not enough processed emails to answer this question reliably.`;
 }

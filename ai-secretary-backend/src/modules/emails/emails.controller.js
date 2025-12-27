@@ -44,3 +44,26 @@ export const getSummarizedEmails = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch summarized emails" });
   }
 };
+
+export async function getLastNEmails(req, res) {
+  const userId = req.user.id;
+  const limit = Math.min(Number(req.query.limit || 10), 50);
+
+  const { rows } = await pool.query(
+    `
+    SELECT subject, from_email, summary, received_at
+    FROM emails
+    WHERE user_id = $1
+      AND ai_processed = TRUE
+      AND is_duplicate = FALSE
+    ORDER BY received_at DESC
+    LIMIT $2
+    `,
+    [userId, limit]
+  );
+
+  res.json({
+    count: rows.length,
+    emails: rows,
+  });
+}

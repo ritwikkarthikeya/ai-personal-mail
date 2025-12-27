@@ -1,41 +1,40 @@
 import { pool } from "../config/db.js";
 import { embeddingService } from "../services/embedding.service.js";
 
-export const generateEmailEmbeddings = async () => {
-  console.log("🔹 Starting email embedding job");
+export const generateEmailEmbeddings = async (userId) => {
+  console.log("🔹 Starting embedding job for user:", userId);
 
-  const { rows: emails } = await pool.query(`
-    SELECT id, user_id, summary
+  const { rows: emails } = await pool.query(
+    `
+    SELECT id, summary
     FROM emails
-    WHERE summary IS NOT NULL
+    WHERE user_id = $1
+      AND summary IS NOT NULL
       AND id NOT IN (SELECT email_id FROM embeddings)
     LIMIT 20
-  `);
+    `,
+    [userId]
+  );
 
   for (const email of emails) {
     try {
       const embedding = await embeddingService.embed(email.summary);
 
-      if (!embedding) {
-        console.warn(`⚠️ Skipping email ${email.id}`);
-        continue;
-      }
+      if (!embedding?.length) continue;
 
-        const vectorLiteral = `[${embedding.join(",")}]`;
+      await pool.query(
+        `
+        INSERT INTO embeddings (user_id, email_id, embedding)
+        VALUES ($1, $2, $3)
+        `,
+        [userId, email.id, embedding]
+      );
 
-        await pool.query(
-          `
-          INSERT INTO embeddings (user_id, email_id, embedding)
-          VALUES ($1, $2, $3::vector(768))
-          `,
-          [email.user_id, email.id, vectorLiteral]
-        );
-        
-        console.log("✅ Embedded email", email.id);
+      console.log("✅ Embedded email", email.id);
     } catch (err) {
-      console.error("❌ Failed to embed email", email.id, err.message);
+      console.error("❌ Embedding failed:", email.id, err.message);
     }
   }
 
-  console.log("✅ Email embedding job finished");
+  console.log("✅ Embedding job finished");
 };

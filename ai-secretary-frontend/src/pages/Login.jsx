@@ -4,11 +4,26 @@ export default function Login() {
   };
 
   return (
-    <div className="center">
-      <h1>AI Personal Secretary</h1>
-      <button onClick={loginWithGoogle}>
-        Sign in with Google
-      </button>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-title">AI Personal Secretary</h1>
+
+        <p className="auth-subtitle">
+          Smart email insights. Search. Summaries. Assistant.
+        </p>
+
+        <button className="auth-button" onClick={loginWithGoogle}>
+          <img
+            src="https://www.svgrepo.com/show/475656/google-color.svg"
+            alt="Google"
+          />
+          Continue with Google
+        </button>
+
+        <p className="auth-footer">
+          Secure Google sign-in • No data misuse
+        </p>
+      </div>
     </div>
   );
 }
