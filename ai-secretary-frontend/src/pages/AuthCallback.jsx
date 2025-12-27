@@ -8,13 +8,14 @@ export default function AuthCallback() {
   useEffect(() => {
     const token = params.get("token");
 
-    if (token) {
-      localStorage.setItem("token", token);
-      navigate("/dashboard");
-    } else {
-      navigate("/login");
+    if (!token) {
+      navigate("/login?error=missing_token", { replace: true });
+      return;
     }
-  }, []);
+
+    localStorage.setItem("token", token);
+    navigate("/dashboard", { replace: true });
+  }, [params, navigate]);
 
   return <p>Logging you in...</p>;
 }

@@ -1,20 +1,27 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 
 export default function App() {
-  const token = localStorage.getItem("token");
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    setToken(localStorage.getItem("token"));
+  }, []);
 
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+
       <Route
         path="/dashboard"
-        element={token ? <Dashboard /> : <Navigate to="/login" />}
+        element={token ? <Dashboard /> : <Navigate to="/login" replace />}
       />
-      <Route path="*" element={<Navigate to="/login" />} />
+
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
