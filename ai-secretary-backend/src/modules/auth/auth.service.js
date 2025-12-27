@@ -14,14 +14,19 @@ export const authService = {
       INSERT INTO users (email, name, google_refresh_token)
       VALUES ($1, $2, $3)
       ON CONFLICT (email)
-      DO UPDATE SET google_refresh_token = $3
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        google_refresh_token = COALESCE(
+          EXCLUDED.google_refresh_token,
+          users.google_refresh_token
+        )
       RETURNING *;
     `;
 
     const values = [
       payload.email,
       payload.name,
-      tokens.refresh_token,
+      tokens.refresh_token ?? null,
     ];
 
     const { rows } = await pool.query(query, values);

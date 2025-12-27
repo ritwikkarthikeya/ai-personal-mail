@@ -28,10 +28,18 @@ export const googleCallback = async (req, res) => {
   try {
     const { code } = req.query;
 
+    if (!code) {
+      throw new Error("No auth code received from Google");
+    }
+
     const { tokens } = await googleClient.getToken(code);
     googleClient.setCredentials(tokens);
 
     const user = await authService.saveUser(tokens);
+
+    if (!user) {
+      throw new Error("User save failed");
+    }
 
     const token = jwt.sign(
       {
@@ -43,10 +51,10 @@ export const googleCallback = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
 
   } catch (err) {
-    console.error("❌ Google auth failed:", err.message);
-    res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
+    console.error("❌ GOOGLE AUTH ERROR:", err);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
   }
 };
