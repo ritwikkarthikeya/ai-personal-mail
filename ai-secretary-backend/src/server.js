@@ -3,9 +3,10 @@ import "./config/env.js";
 import app from "./app.js";
 import { env } from "./config/env.js";
 import { startSchedulers } from "./utils/scheduler.js";
+const PORT = process.env.PORT || 5003;
 
-app.listen(env.port || 5000, () => {
-  console.log(`🚀 Server running on port ${env.port || 5000}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log("🚀 Starting schedulers...");
   startSchedulers(); // 👈 START BACKGROUND JOBS
 });
