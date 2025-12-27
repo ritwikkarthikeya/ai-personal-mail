@@ -1,14 +1,13 @@
 import pkg from "pg";
-import { env } from "./env.js";
-
 const { Pool } = pkg;
 
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL missing");
+}
+
 export const pool = new Pool({
-  host: env.db.host,
-  port: env.db.port,
-  user: env.db.user,
-  password: env.db.password,
-  database: env.db.database,
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 pool.on("connect", () => {
