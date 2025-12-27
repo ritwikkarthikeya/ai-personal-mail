@@ -2,6 +2,12 @@ import jwt from "jsonwebtoken";
 import { googleClient } from "../../config/google.js";
 import { authService } from "./auth.service.js";
 
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
+if (!FRONTEND_URL) {
+  throw new Error("FRONTEND_URL is not defined");
+}
+
 export const googleLogin = (req, res) => {
   const url = googleClient.generateAuthUrl({
     access_type: "offline",
@@ -37,10 +43,10 @@ export const googleCallback = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    const FRONTEND_URL = "https://ai-personal-mail.vercel.app"; // change if needed
     res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
 
   } catch (err) {
-  res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
-}
+    console.error("❌ Google auth failed:", err.message);
+    res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
+  }
 };
