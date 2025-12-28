@@ -7,7 +7,7 @@ export const authService = {
       idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-
+   
     const payload = ticket.getPayload();
 
     const query = `
@@ -28,6 +28,7 @@ export const authService = {
       payload.name,
       tokens.refresh_token ?? null,
     ];
+    console.log("🔑 Refresh token:", tokens.refresh_token);
 
     const { rows } = await pool.query(query, values);
     return rows[0];

@@ -7,9 +7,11 @@ import { runEmailIngestionCron } from "../emails/email.ingestion.cron.js";
 export const googleLogin = (req, res) => {
   const url = googleClient.generateAuthUrl({
     access_type: "offline",
+    include_granted_scopes: false, 
     scope: [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
+      "openid",
+      "email",
+      "profile",
       "https://www.googleapis.com/auth/gmail.readonly",
     ],
     prompt: "consent",
