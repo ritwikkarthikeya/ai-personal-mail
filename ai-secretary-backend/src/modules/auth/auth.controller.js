@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { googleClient } from "../../config/google.js";
 import { authService } from "./auth.service.js";
+import { pool } from "../../config/db.js";
+import { runEmailIngestionCron } from "../emails/email.ingestion.cron.js";
 
 export const googleLogin = (req, res) => {
   const url = googleClient.generateAuthUrl({
@@ -25,6 +27,19 @@ export const googleCallback = async (req, res) => {
 
     const user = await authService.saveUser(tokens);
 
+    /* 🔹 CREATE gmail cursor (ONLY ONCE) */
+    await pool.query(
+      `
+      INSERT INTO gmail_cursors (user_id, next_page_token)
+      VALUES ($1, NULL)
+      ON CONFLICT (user_id) DO NOTHING
+      `,
+      [user.id]
+    );
+
+    /* 🔹 START INGESTION IMMEDIATELY */
+    await runEmailIngestionCron(user.id);
+
     const token = jwt.sign(
       {
         userId: user.id,
@@ -36,10 +51,9 @@ export const googleCallback = async (req, res) => {
     );
 
     const FRONTEND_URL = process.env.FRONTEND_URL;
-
     res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
   } catch (err) {
-    console.error("❌ Google auth failed:", err);
+    console.error("❌ Google auth failed:", err.message);
     res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
   }
 };

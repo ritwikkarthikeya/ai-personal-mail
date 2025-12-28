@@ -2,11 +2,16 @@ import "./config/env.js";
 import app from "./app.js";
 import { startSchedulers } from "./utils/scheduler.js";
 
-const PORT = Number(process.env.PORT || 8000);
+const PORT = Number(process.env.PORT);
 
-/* Health check MUST exist BEFORE listen */
+if (!PORT) {
+  console.error("❌ PORT is not defined");
+  process.exit(1);
+}
+
+/* REQUIRED FOR KOYEB */
 app.get("/health", (req, res) => {
-  res.status(200).json({
+  res.json({
     status: "ok",
     service: "ai-secretary-backend",
     timestamp: new Date().toISOString(),
@@ -19,7 +24,6 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
   if (!schedulersStarted) {
-    console.log("🚀 Starting schedulers...");
     startSchedulers();
     schedulersStarted = true;
   }
