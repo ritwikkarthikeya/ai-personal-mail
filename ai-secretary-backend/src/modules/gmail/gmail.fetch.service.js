@@ -28,9 +28,9 @@ export async function loadUserCredentials(userId) {
   return oauth2Client;
 }
 
+/* ✅ FETCH EMAIL IDS */
 export async function fetchNextEmails({ userId, maxResults, pageToken }) {
   const auth = await loadUserCredentials(userId);
-
   const gmail = google.gmail({ version: "v1", auth });
 
   const res = await gmail.users.messages.list({
@@ -43,4 +43,18 @@ export async function fetchNextEmails({ userId, maxResults, pageToken }) {
     messages: res.data.messages || [],
     nextPageToken: res.data.nextPageToken,
   };
+}
+
+/* ✅ FETCH FULL EMAIL */
+export async function fetchEmailById(userId, messageId) {
+  const auth = await loadUserCredentials(userId);
+  const gmail = google.gmail({ version: "v1", auth });
+
+  const res = await gmail.users.messages.get({
+    userId: "me",
+    id: messageId,
+    format: "full",
+  });
+
+  return res.data;
 }
