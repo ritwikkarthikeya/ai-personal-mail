@@ -1,16 +1,23 @@
 import { pool } from "../../config/db.js";
 
 // GET /api/emails
-export const getEmails = async (req, res) => {
+// src/modules/emails/emails.controller.js
+export async function getEmails(req, res) {
   try {
     const userId = req.user.userId;
 
     const { rows } = await pool.query(
       `
-      SELECT id, subject, from_email, received_at
+      SELECT
+        id,
+        subject,
+        from_email,
+        body,
+        created_at
       FROM emails
       WHERE user_id = $1
-      ORDER BY received_at DESC
+      ORDER BY created_at DESC
+      LIMIT 50
       `,
       [userId]
     );
@@ -20,7 +27,8 @@ export const getEmails = async (req, res) => {
     console.error("getEmails error:", err);
     res.status(500).json({ error: "Failed to fetch emails" });
   }
-};
+}
+
 
 // GET /api/emails/summaries
 export const getSummarizedEmails = async (req, res) => {
