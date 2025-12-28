@@ -29,20 +29,7 @@ export const googleCallback = async (req, res) => {
 
     const user = await authService.saveUser(tokens);
 
-    /* 🔹 CREATE gmail cursor (ONLY ONCE) */
-    await pool.query(
-      `
-      INSERT INTO gmail_cursors (user_id, next_page_token)
-      VALUES ($1, NULL)
-      ON CONFLICT (user_id) DO NOTHING
-      `,
-      [user.id]
-    );
-
-    /* 🔹 START INGESTION IMMEDIATELY */
-    await runEmailIngestionCron(user.id);
-
-    const token = jwt.sign(
+    const jwtToken = jwt.sign(
       {
         userId: user.id,
         email: user.email,
@@ -52,10 +39,14 @@ export const googleCallback = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    const FRONTEND_URL = process.env.FRONTEND_URL;
-    res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
+    const FRONTEND_URL = "https://ai-personal-mail.vercel.app";
+    return res.redirect(`${FRONTEND_URL}/auth/callback?token=${jwtToken}`);
+
   } catch (err) {
-    console.error("❌ Google auth failed:", err.message);
-    res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    console.error("❌ Google callback failed:", err);
+    return res.redirect(
+      "https://ai-personal-mail.vercel.app/login?error=auth_failed"
+    );
   }
 };
+
