@@ -1,10 +1,7 @@
 import { google } from "googleapis";
-import { googleClient } from "../../config/google.js";
 import { pool } from "../../config/db.js";
 
-const gmail = google.gmail({ version: "v1", auth: googleClient });
-
-async function loadUserCredentials(userId) {
+export async function loadUserCredentials(userId) {
   const { rows } = await pool.query(
     `
     SELECT google_refresh_token
@@ -18,13 +15,23 @@ async function loadUserCredentials(userId) {
     throw new Error("Missing refresh token");
   }
 
-  googleClient.setCredentials({
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+
+  oauth2Client.setCredentials({
     refresh_token: rows[0].google_refresh_token,
   });
+
+  return oauth2Client;
 }
 
 export async function fetchNextEmails({ userId, maxResults, pageToken }) {
-  await loadUserCredentials(userId);
+  const auth = await loadUserCredentials(userId);
+
+  const gmail = google.gmail({ version: "v1", auth });
 
   const res = await gmail.users.messages.list({
     userId: "me",
@@ -36,16 +43,4 @@ export async function fetchNextEmails({ userId, maxResults, pageToken }) {
     messages: res.data.messages || [],
     nextPageToken: res.data.nextPageToken,
   };
-}
-
-export async function fetchEmailById(userId, messageId) {
-  await loadUserCredentials(userId);
-
-  const res = await gmail.users.messages.get({
-    userId: "me",
-    id: messageId,
-    format: "full",
-  });
-
-  return res.data;
 }
