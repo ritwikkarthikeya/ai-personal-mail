@@ -7,8 +7,10 @@ export const authService = {
       idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-   
+
     const payload = ticket.getPayload();
+
+    const refreshToken = tokens.refresh_token || null;
 
     const query = `
       INSERT INTO users (email, name, google_refresh_token)
@@ -16,19 +18,15 @@ export const authService = {
       ON CONFLICT (email)
       DO UPDATE SET
         name = EXCLUDED.name,
-        google_refresh_token = COALESCE(
-          EXCLUDED.google_refresh_token,
-          users.google_refresh_token
-        )
+        google_refresh_token = COALESCE(users.google_refresh_token, EXCLUDED.google_refresh_token)
       RETURNING *;
     `;
 
     const values = [
       payload.email,
       payload.name,
-      tokens.refresh_token ?? null,
+      refreshToken,
     ];
-    console.log("🔑 Refresh token:", tokens.refresh_token);
 
     const { rows } = await pool.query(query, values);
     return rows[0];
