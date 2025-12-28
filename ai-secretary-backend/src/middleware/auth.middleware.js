@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 export const requireAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader) {
     return res.status(401).json({ error: "Missing Authorization header" });
   }
 
@@ -12,14 +12,13 @@ export const requireAuth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // IMPORTANT: no DB query here
     req.user = {
-      id: decoded.userId,
+      userId: decoded.userId, // 🔴 MUST MATCH emails.user_id
       email: decoded.email,
     };
 
     next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ error: "Invalid token" });
   }
 };

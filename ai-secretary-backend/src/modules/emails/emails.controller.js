@@ -1,54 +1,21 @@
 import { pool } from "../../config/db.js";
 
-// GET /api/emails
-// src/modules/emails/emails.controller.js
-export async function getEmails(req, res) {
-  try {
-    const userId = req.user.userId;
+export const getEmails = async (req, res) => {
+  const userId = req.user?.userId;
 
-    const { rows } = await pool.query(
-      `
-      SELECT
-        id,
-        subject,
-        from_email,
-        body,
-        created_at
-      FROM emails
-      WHERE user_id = $1
-      ORDER BY created_at DESC
-      LIMIT 50
-      `,
-      [userId]
-    );
-
-    res.json(rows);
-  } catch (err) {
-    console.error("getEmails error:", err);
-    res.status(500).json({ error: "Failed to fetch emails" });
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
-}
 
+  const { rows } = await pool.query(
+    `
+    SELECT id, subject, from_email, created_at, ai_processed
+    FROM emails
+    WHERE user_id = $1
+    ORDER BY created_at DESC
+    `,
+    [userId]
+  );
 
-// GET /api/emails/summaries
-export const getSummarizedEmails = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    const { rows } = await pool.query(
-      `
-      SELECT id, subject, summary, importance
-      FROM emails
-      WHERE user_id = $1
-        AND summary IS NOT NULL
-      ORDER BY received_at DESC
-      `,
-      [userId]
-    );
-
-    res.json(rows);
-  } catch (err) {
-    console.error("getSummarizedEmails error:", err);
-    res.status(500).json({ error: "Failed to fetch summaries" });
-  }
+  res.json(rows); // ⚠️ return ARRAY, not { rows }
 };
