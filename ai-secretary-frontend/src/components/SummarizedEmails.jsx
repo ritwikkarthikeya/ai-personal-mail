@@ -1,24 +1,36 @@
 import { useEffect, useState } from "react";
-import { fetchSummarizedEmails } from "../api/emails";
+import { apiFetch } from "../utils/api";
 
 export default function SummarizedEmails() {
   const [emails, setEmails] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  apiFetch("/emails")
-    .then((data) => setEmails(Array.isArray(data) ? data : []))
-    .catch(() => setEmails([]));
-}, []);
+  useEffect(() => {
+    const loadSummaries = async () => {
+      try {
+        const data = await apiFetch("/emails/summaries");
+        setEmails(data || []);
+      } catch (err) {
+        console.error("getSummarizedEmails error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSummaries();
+  }, []);
+
+  if (loading) return <p>Loading summaries...</p>;
+  if (!emails.length) return <p>No summaries yet.</p>;
 
   return (
-    <section>
-      <h3>Summarized Emails</h3>
-      {emails.map((e) => (
-        <div key={e.id} className="card">
-          <b>{e.subject}</b>
-          <p>{e.summary}</p>
+    <div>
+      {emails.map((email) => (
+        <div key={email.id} className="summary-card">
+          <h3>{email.subject}</h3>
+          <p>{email.summary}</p>
         </div>
       ))}
-    </section>
+    </div>
   );
 }

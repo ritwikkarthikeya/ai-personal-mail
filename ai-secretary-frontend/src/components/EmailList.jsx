@@ -1,23 +1,36 @@
 import { useEffect, useState } from "react";
-import { fetchEmails } from "../api/emails";
+import { apiFetch } from "../utils/api";
 
 export default function EmailList() {
   const [emails, setEmails] = useState([]);
-useEffect(() => {
-  apiFetch("/emails")
-    .then((data) => setEmails(Array.isArray(data) ? data : []))
-    .catch(() => setEmails([]));
-}, []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEmails = async () => {
+      try {
+        const data = await apiFetch("/emails");
+        setEmails(data || []);
+      } catch (err) {
+        console.error("getEmails error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEmails();
+  }, []);
+
+  if (loading) return <p>Loading emails...</p>;
+  if (!emails.length) return <p>No emails found.</p>;
+
   return (
-    <section>
-      <h3>All Emails</h3>
-      {Array.isArray(emails) && emails.map((e) => (
-        <div key={e.id} className="card">
-          <b>{e.subject}</b>
-          <p>{e.summary}</p>
-          <small>{e.importance}</small>
+    <div>
+      {emails.map((email) => (
+        <div key={email.id} className="email-card">
+          <h3>{email.subject}</h3>
+          <p><strong>From:</strong> {email.from_email}</p>
         </div>
       ))}
-    </section>
+    </div>
   );
 }
