@@ -2,12 +2,11 @@ import jwt from "jsonwebtoken";
 import { googleClient } from "../../config/google.js";
 import { authService } from "./auth.service.js";
 import { pool } from "../../config/db.js";
-import { runEmailIngestionCron } from "../emails/email.ingestion.cron.js";
 
 export const googleLogin = (req, res) => {
   const url = googleClient.generateAuthUrl({
     access_type: "offline",
-    include_granted_scopes: false, 
+    include_granted_scopes: true, // ✅ IMPORTANT
     scope: [
       "openid",
       "email",
@@ -27,8 +26,20 @@ export const googleCallback = async (req, res) => {
     const { tokens } = await googleClient.getToken(code);
     googleClient.setCredentials(tokens);
 
+    // ✅ Save / update user + refresh token
     const user = await authService.saveUser(tokens);
 
+    // ✅ ENSURE gmail_cursors row exists (CRITICAL)
+    await pool.query(
+      `
+      INSERT INTO gmail_cursors (user_id, next_page_token)
+      VALUES ($1, NULL)
+      ON CONFLICT (user_id) DO NOTHING
+      `,
+      [user.id]
+    );
+
+    // ✅ Issue JWT for frontend
     const jwtToken = jwt.sign(
       {
         userId: user.id,
@@ -41,7 +52,6 @@ export const googleCallback = async (req, res) => {
 
     const FRONTEND_URL = "https://ai-personal-mail.vercel.app";
     return res.redirect(`${FRONTEND_URL}/auth/callback?token=${jwtToken}`);
-
   } catch (err) {
     console.error("❌ Google callback failed:", err);
     return res.redirect(
@@ -49,4 +59,3 @@ export const googleCallback = async (req, res) => {
     );
   }
 };
-

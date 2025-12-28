@@ -7,6 +7,10 @@ export const processUnprocessedEmails = async (userId) => {
     console.warn("⚠️ processUnprocessedEmails called without userId");
     return;
   }
+if (process.env.DISABLE_AI === "true") {
+  console.log("⏸️ AI disabled");
+  return;
+}
 
   console.log("⏰ Running AI email processor for user:", userId);
 

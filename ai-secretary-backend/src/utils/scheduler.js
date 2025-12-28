@@ -1,27 +1,16 @@
-import cron from "node-cron";
-import { pool } from "../config/db.js";
-import { runEmailIngestionCron } from "../modules/emails/email.ingestion.cron.js";
-import { processUnprocessedEmails } from "../modules/ai/email.processor.js";
+cron.schedule("*/5 * * * *", async () => {
+  console.log("⏰ Cron tick");
 
-export const startSchedulers = () => {
-  if (process.env.DISABLE_CRON === "true") {
-    console.log("⏸️ Cron disabled");
-    return;
+  const { rows: users } = await pool.query(`
+    SELECT DISTINCT user_id
+    FROM gmail_cursors
+    WHERE user_id IS NOT NULL
+  `);
+
+  for (const { user_id } of users) {
+    if (!user_id) continue; // 🛑 HARD STOP
+
+    await runEmailIngestionCron(user_id);
+    await processUnprocessedEmails(user_id);
   }
-
-  console.log("🚀 Starting schedulers...");
-
-  cron.schedule("*/5 * * * *", async () => {
-    console.log("⏰ Cron tick");
-
-    const { rows } = await pool.query(`
-      SELECT user_id
-      FROM gmail_cursors
-    `);
-
-    for (const { user_id } of rows) {
-      await runEmailIngestionCron(user_id);
-      await processUnprocessedEmails(user_id);
-    }
-  });
-};
+});
