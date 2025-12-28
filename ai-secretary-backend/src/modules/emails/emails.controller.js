@@ -19,3 +19,27 @@ export const getEmails = async (req, res) => {
 
   res.json(rows); // ⚠️ return ARRAY, not { rows }
 };
+
+
+// GET /api/emails/summaries
+export const getSummarizedEmails = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const { rows } = await pool.query(
+      `
+      SELECT id, subject, summary, importance
+      FROM emails
+      WHERE user_id = $1
+        AND summary IS NOT NULL
+      ORDER BY received_at DESC
+      `,
+      [userId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("getSummarizedEmails error:", err);
+    res.status(500).json({ error: "Failed to fetch summaries" });
+  }
+};
