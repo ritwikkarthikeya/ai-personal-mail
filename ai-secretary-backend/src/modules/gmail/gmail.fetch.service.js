@@ -3,15 +3,12 @@ import { pool } from "../../config/db.js";
 
 export async function loadUserCredentials(userId) {
   const { rows } = await pool.query(
-    `
-    SELECT google_refresh_token
-    FROM users
-    WHERE id = $1
-    `,
+    `SELECT google_refresh_token FROM users WHERE id = $1`,
     [userId]
   );
 
   if (!rows.length || !rows[0].google_refresh_token) {
+    console.error("❌ No refresh token in DB for user:", userId);
     throw new Error("Missing refresh token");
   }
 
@@ -24,10 +21,7 @@ export async function loadUserCredentials(userId) {
   oauth2Client.setCredentials({
     refresh_token: rows[0].google_refresh_token,
   });
-if (!rows.length || !rows[0].google_refresh_token) {
-  console.error("❌ No refresh token in DB for user:", userId);
-  throw new Error("Missing refresh token");
-}
+
   return oauth2Client;
 }
 
