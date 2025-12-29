@@ -1,7 +1,7 @@
 export default function Login() {
-const loginWithGoogle = () => {
+  const loginWithGoogle = () => {
     window.location.href =
-      "https://magnificent-mercy-ritwikkarthikeya-a5e5a947.koyeb.app/api/auth/google";
+      "http://localhost:5003/api/auth/google";
   };
 
   return (

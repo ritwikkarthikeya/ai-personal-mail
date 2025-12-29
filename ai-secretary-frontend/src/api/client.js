@@ -1,4 +1,4 @@
-const API_BASE = "https://magnificent-mercy-ritwikkarthikeya-a5e5a947.koyeb.app/api";
+const API_BASE = "http://localhost:5003/api";
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
 

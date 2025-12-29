@@ -1,4 +1,4 @@
-const API_BASE = "https://magnificent-mercy-ritwikkarthikeya-a5e5a947.koyeb.app/api";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
@@ -7,14 +7,10 @@ export const apiFetch = async (endpoint, options = {}) => {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
   });
-
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}`);
-  }
 
   return res.json();
 };

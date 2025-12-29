@@ -17,10 +17,11 @@ export default function AskAssistant() {
     try {
       const response = await askAssistant(input);
 
-      const aiMessage = {
-        role: "assistant",
-        content: response || "No answer available.",
-      };
+const aiMessage = {
+  role: "assistant",
+  content: response?.answer || "No answer available.",
+};
+
 
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
