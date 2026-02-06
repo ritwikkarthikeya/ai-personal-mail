@@ -1,8 +1,9 @@
-import { OAuth2Client } from "google-auth-library";
-import { env } from "./env.js";
+import { google } from "googleapis";
 
-export const googleClient = new OAuth2Client(
-  env.google.clientId,
-  env.google.clientSecret,
-  env.google.redirectUri
-);
+export const createOAuthClient = () => {
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+};

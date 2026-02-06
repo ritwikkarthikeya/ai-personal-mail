@@ -1,16 +1,6 @@
-import pkg from "pg";
-const { Pool } = pkg;
-import dotenv from "dotenv";
+import mongoose from "mongoose";
 
-dotenv.config();
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL missing");
-}
-
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
-
-pool.on("connect", () => {
-  console.log("✅ PostgreSQL (LOCAL) connected");
-});
+export const connectDB = async () => {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log("✅ Mongo connected");
+};

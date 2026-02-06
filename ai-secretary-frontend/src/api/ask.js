@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch } from "../utils/api";
 
 export const askAssistant = (question) =>
   apiFetch("/search/ask", {

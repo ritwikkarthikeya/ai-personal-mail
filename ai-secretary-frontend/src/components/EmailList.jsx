@@ -26,11 +26,13 @@ export default function EmailList() {
   return (
     <div>
       {emails.map((email) => (
-        <div key={email.id} className="email-card">
-          <h3>{email.subject}</h3>
-          <p><strong>From:</strong> {email.from_email}</p>
-        </div>
-      ))}
+  <div key={email._id} className="email-card">
+    <h3>{email.subject}</h3>
+    <p>
+      <strong>From:</strong> {email.from}
+    </p>
+  </div>
+))}
     </div>
   );
 }

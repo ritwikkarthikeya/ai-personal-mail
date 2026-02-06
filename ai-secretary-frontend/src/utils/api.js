@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5003/api";
 
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
@@ -11,6 +11,10 @@ export const apiFetch = async (endpoint, options = {}) => {
       ...options.headers,
     },
   });
+
+  if (!res.ok) {
+    throw new Error("API error");
+  }
 
   return res.json();
 };

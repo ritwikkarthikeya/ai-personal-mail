@@ -1,30 +1,12 @@
-import "./config/env.js";
-import app from "./app.js";
-import { startSchedulers } from "./utils/scheduler.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-const PORT = Number(process.env.PORT);
+// Dynamic imports AFTER env is ready
+const { default: app } = await import("./app.js");
+const { connectDB } = await import("./config/db.js");
 
-if (!PORT) {
-  console.error("❌ PORT is not defined");
-  process.exit(1);
-}
+await connectDB();
 
-/* REQUIRED FOR KOYEB */
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    service: "ai-secretary-backend",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-let schedulersStarted = false;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-
-  if (!schedulersStarted) {
-    startSchedulers();
-    schedulersStarted = true;
-  }
+app.listen(process.env.PORT || 5003, () => {
+  console.log("🚀 Server running on", process.env.PORT || 5003);
 });

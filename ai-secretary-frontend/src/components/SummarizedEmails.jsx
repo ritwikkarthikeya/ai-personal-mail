@@ -26,11 +26,12 @@ export default function SummarizedEmails() {
   return (
     <div>
       {emails.map((email) => (
-        <div key={email.id} className="summary-card">
-          <h3>{email.subject}</h3>
-          <p>{email.summary}</p>
-        </div>
-      ))}
+  <div key={email._id} className="summary-card">
+    <h3>{email.subject}</h3>
+    <p>{email.summary}</p>
+  </div>
+))}
+
     </div>
   );
 }

@@ -1,31 +1,48 @@
 import { google } from "googleapis";
-import { googleClient } from "../config/google.js";
+import { createOAuthClient } from "../config/google.js";
+import User from "../models/User.js";
 
-export const gmailService = {
-  async getClient(refreshToken) {
-    googleClient.setCredentials({
-      refresh_token: refreshToken,
-    });
+export const getGmailClientForUser = async (userId) => {
+  const user = await User.findById(userId);
 
-    return google.gmail({ version: "v1", auth: googleClient });
-  },
+  if (!user) throw new Error("User not found");
 
-  async listMessages(gmail) {
-    const res = await gmail.users.messages.list({
-      userId: "me",
-      maxResults: 10, // keep small for now
-    });
+  const oauth2Client = createOAuthClient();
 
-    return res.data.messages || [];
-  },
+  oauth2Client.setCredentials({
+    access_token: user.accessToken,
+    refresh_token: user.refreshToken,
+  });
 
-  async getMessage(gmail, messageId) {
-    const res = await gmail.users.messages.get({
-      userId: "me",
-      id: messageId,
-      format: "full",
-    });
+  return google.gmail({
+    version: "v1",
+    auth: oauth2Client,
+  });
+};
 
-    return res.data;
-  },
+// ----------------------------
+
+export const fetchEmails = async (userId) => {
+  const gmail = await getGmailClientForUser(userId);
+
+  const list = await gmail.users.messages.list({
+    userId: "me",
+    maxResults: 5,
+  });
+
+  return list.data.messages || [];
+};
+
+// ----------------------------
+
+export const getEmailDetails = async (userId, id) => {
+  const gmail = await getGmailClientForUser(userId);
+
+  const msg = await gmail.users.messages.get({
+    userId: "me",
+    id,
+    format: "full",
+  });
+
+  return msg.data;
 };

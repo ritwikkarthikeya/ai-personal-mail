@@ -10,6 +10,14 @@ export default function App() {
   useEffect(() => {
     setToken(localStorage.getItem("token"));
   }, []);
+  useEffect(() => {
+    const stored = localStorage.getItem("token");
+    setToken(stored);
+
+    window.addEventListener("storage", () => {
+      setToken(localStorage.getItem("token"));
+    });
+  }, []);
 
   return (
     <Routes>
