@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema({
   email: String,
   name: String,
   accessToken: String,
-  refreshToken: String
+  refreshToken: String,
+  historyId: String, 
 });
 
 export default mongoose.model("User", userSchema);

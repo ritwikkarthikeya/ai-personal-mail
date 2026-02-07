@@ -1,13 +1,13 @@
 import Email from "../models/Email.js";
-import { fetchEmails, getEmailDetails } from "../services/gmail.service.js";
+import {   getEmailDetails } from "../services/gmail.service.js";
 import { summarizeMail } from "../services/ollama.service.js";
 import { generateEmbedding } from "../services/embedding.service.js";
-
+import { fetchNewMessages } from "../services/gmail.service.js";
 export const syncEmails = async (req, res) => {
   try {
     console.log("SYNC user:", req.user.id);
 
-    const msgs = await fetchEmails(req.user.id);
+    const msgs = await fetchNewMessages(req.user.id);
 
     console.log("Fetched messages:", msgs.length);
 

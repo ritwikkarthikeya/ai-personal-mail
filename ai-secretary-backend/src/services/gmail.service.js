@@ -20,20 +20,57 @@ export const getGmailClientForUser = async (userId) => {
   });
 };
 
-// ----------------------------
+// ------------------------------------
 
-export const fetchEmails = async (userId) => {
+export const fetchNewMessages = async (userId) => {
   const gmail = await getGmailClientForUser(userId);
+  const user = await User.findById(userId);
 
-  const list = await gmail.users.messages.list({
+  // First time → normal inbox fetch
+  if (!user.historyId) {
+    const res = await gmail.users.messages.list({
+      userId: "me",
+      maxResults: 50,
+    });
+
+    const profile = await gmail.users.getProfile({
+      userId: "me",
+    });
+
+    user.historyId = profile.data.historyId;
+    await user.save();
+
+    return res.data.messages || [];
+  }
+
+  // Incremental history API
+  const historyRes = await gmail.users.history.list({
     userId: "me",
-    maxResults: 5,
+    startHistoryId: user.historyId,
   });
 
-  return list.data.messages || [];
+  const history = historyRes.data.history || [];
+
+  const messageIds = new Set();
+
+  history.forEach((h) => {
+    h.messagesAdded?.forEach((m) => {
+      messageIds.add(m.message.id);
+    });
+  });
+
+  // update checkpoint
+  const profile = await gmail.users.getProfile({
+    userId: "me",
+  });
+
+  user.historyId = profile.data.historyId;
+  await user.save();
+
+  return [...messageIds].map((id) => ({ id }));
 };
 
-// ----------------------------
+// ------------------------------------
 
 export const getEmailDetails = async (userId, id) => {
   const gmail = await getGmailClientForUser(userId);
