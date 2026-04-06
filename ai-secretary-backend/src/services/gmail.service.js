@@ -7,10 +7,14 @@ export const getGmailClientForUser = async (userId) => {
 
   if (!user) throw new Error("User not found");
 
+  if (!user.refreshToken) {
+    throw new Error("Gmail not connected. No refresh token.");
+  }
+
   const oauth2Client = createOAuthClient();
 
+  // 🔥 ONLY refresh token
   oauth2Client.setCredentials({
-    access_token: user.accessToken,
     refresh_token: user.refreshToken,
   });
 
@@ -30,7 +34,7 @@ export const fetchNewMessages = async (userId) => {
   if (!user.historyId) {
     const res = await gmail.users.messages.list({
       userId: "me",
-      maxResults: 50,
+      maxResults: 20,
     });
 
     const profile = await gmail.users.getProfile({
@@ -43,31 +47,44 @@ export const fetchNewMessages = async (userId) => {
     return res.data.messages || [];
   }
 
-  // Incremental history API
-  const historyRes = await gmail.users.history.list({
-    userId: "me",
-    startHistoryId: user.historyId,
-  });
-
-  const history = historyRes.data.history || [];
-
-  const messageIds = new Set();
-
-  history.forEach((h) => {
-    h.messagesAdded?.forEach((m) => {
-      messageIds.add(m.message.id);
+  // Incremental history API — historyId can go stale after ~30 days (404)
+  try {
+    const historyRes = await gmail.users.history.list({
+      userId: "me",
+      startHistoryId: user.historyId,
     });
-  });
 
-  // update checkpoint
-  const profile = await gmail.users.getProfile({
-    userId: "me",
-  });
+    const history = historyRes.data.history || [];
+    const messageIds = new Set();
 
-  user.historyId = profile.data.historyId;
-  await user.save();
+    history.forEach((h) => {
+      h.messagesAdded?.forEach((m) => {
+        messageIds.add(m.message.id);
+      });
+    });
 
-  return [...messageIds].map((id) => ({ id }));
+    // Update checkpoint
+    const profile = await gmail.users.getProfile({ userId: "me" });
+    user.historyId = profile.data.historyId;
+    await user.save();
+
+    return [...messageIds].map((id) => ({ id }));
+  } catch (histErr) {
+    // historyId is stale or invalid — reset and do a full fresh fetch
+    if (histErr.status === 404 || histErr.code === 404 || histErr.response?.status === 404) {
+      console.warn("⚠️  historyId stale (404) — resetting and doing full fetch");
+      user.historyId = null;
+      await user.save();
+
+      const res = await gmail.users.messages.list({ userId: "me", maxResults: 50 });
+      const profile = await gmail.users.getProfile({ userId: "me" });
+      user.historyId = profile.data.historyId;
+      await user.save();
+
+      return res.data.messages || [];
+    }
+    throw histErr;
+  }
 };
 
 // ------------------------------------
